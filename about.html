@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>About - ELEVATE FITNESS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'neon-green': '#00ff41',
+            'electric-blue': '#00d4ff',
+            'dark-bg': '#0a0a0a',
+            'dark-card': '#1a1a1a'
+          },
+          fontFamily: {
+            'clean': ['Inter', 'Helvetica', 'Arial', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { margin: 0; overflow-x: hidden; }
+    .fade-in { opacity: 0; transform: translateY(40px); transition: all 0.9s ease; }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+    .divider { height: 1px; background: linear-gradient(90deg, transparent, #00ff41, transparent); }
+    .btn-neon {
+      background: linear-gradient(to right, #00ff41, #00d4ff);
+      color: #000; font-weight: bold; padding: 1rem 2.5rem;
+      border-radius: .75rem; transition: all .3s; box-shadow: 0 0 25px rgba(0,255,65,0.5);
+    }
+    .btn-neon:hover { transform: scale(1.1); box-shadow: 0 0 40px rgba(0,255,65,0.7); }
+    .btn-border {
+      border: 2px solid #00d4ff; color: #00d4ff; padding: .7rem 2rem;
+      border-radius: .7rem; transition: all .3s;
+    }
+    .btn-border:hover { background: #00d4ff; color: #000; transform: scale(1.05); }
+    .sticky-nav { backdrop-filter: blur(12px); background: rgba(10,10,10,0.94); }
+    .nav-link {
+      position: relative; transition: color 0.3s;
+    }
+    .nav-link:hover, .nav-link.active { color: #00ff41; }
+    .nav-link.active::after, .nav-link:hover::after {
+      content: ''; position: absolute; bottom: -8px; left: 0; width: 100%; height: 3px;
+      background: linear-gradient(to right, #00ff41, #00d4ff);
+    }
+    .glow-text {
+      text-shadow: 0 0 15px rgba(0,255,65,0.6), 0 0 30px rgba(0,255,65,0.4);
+    }
+    .pulse-ring { animation: pulse 2.5s infinite; }
+    @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+    .floating { animation: float 4s ease-in-out infinite; }
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+
+    #canvas3d { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+
+    /* Shine Effect */
+    .info-box, .value-card {
+      position: relative; overflow: hidden; transition: all 0.4s;
+    }
+    .info-box::before, .value-card::before {
+      content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(0,255,65,0.15), transparent);
+      transform: rotate(45deg); opacity: 0;
+    }
+    .info-box:hover::before, .value-card:hover::before {
+      opacity: 1; animation: shine 1.8s infinite;
+    }
+    @keyframes shine {
+      0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+      100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    }
+
+    /* Timeline */
+    .timeline-item {
+      position: relative; padding-left: 50px; margin-bottom: 40px;
+    }
+    .timeline-item::before {
+      content: ''; position: absolute; left: 0; top: 8px;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: #00ff41; box-shadow: 0 0 25px rgba(0,255,65,0.7);
+    }
+    .timeline-item::after {
+      content: ''; position: absolute; left: 11px; top: 32px; width: 2px; height: calc(100% + 20px);
+      background: linear-gradient(to bottom, #00ff41, transparent);
+    }
+    .timeline-item:last-child::after { display: none; }
+
+    /* Stats */
+    .stat-number {
+      font-size: 4.5rem; font-weight: bold;
+      background: linear-gradient(135deg, #00ff41, #00d4ff);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    /* Mobile Menu */
+    #mobile-menu {
+      position: fixed; top: 0; right: 0; width: 85%; max-width: 420px; height: 100vh;
+      background: rgba(10,10,10,0.98); backdrop-filter: blur(20px);
+      transform: translateX(100%); transition: transform 0.5s cubic-bezier(0.77, 0, 0.175, 1);
+      display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 3.5rem;
+      z-index: 40;
+    }
+    #mobile-menu.open { transform: translateX(0); }
+    .nav-link-mobile {
+      font-size: 2.2rem; font-weight: bold; color: #e0e0e0;
+      transition: all 0.4s;
+    }
+    .nav-link-mobile:hover {
+      color: #00ff41; text-shadow: 0 0 25px #00ff41; transform: scale(1.1);
+    }
+
+    /* Hamburger */
+    .hamburger span { display: block; width: 32px; height: 3px; background: #00ff41; transition: all 0.3s; }
+    .hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(9px, 9px); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(9px, -9px); }
+  </style>
+</head>
+<body class="bg-dark-bg text-white font-clean min-h-screen">
+
+  <!-- 3D Background -->
+  <canvas id="canvas3d"></canvas>
+
+  <!-- NAVBAR -->
+  <nav id="navbar" class="fixed w-full top-0 z-50 py-5 px-6 transition-all duration-300">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+      <div class="text-3xl font-bold text-neon-green glow-text">ELEVATE FITNESS</div>
+
+      <!-- Desktop Menu -->
+      <div class="hidden md:flex space-x-10 text-lg">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="about.html" class="nav-link active">About</a>
+        <a href="programs.html" class="nav-link">Programs</a>
+        <a href="membership.html" class="nav-link">Membership</a>
+        <a href="gallery.html" class="nav-link">Gallery</a>
+        <a href="contact.html" class="nav-link">Contact</a>
+      </div>
+
+      <!-- Mobile Hamburger -->
+      <button id="mobile-btn" class="md:hidden hamburger flex flex-col gap-1.5 z-50">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="hidden">
+    <a href="index.html" class="nav-link-mobile">Home</a>
+    <a href="about.html" class="nav-link-mobile">About</a>
+    <a href="programs.html" class="nav-link-mobile">Programs</a>
+    <a href="membership.html" class="nav-link-mobile">Membership</a>
+    <a href="gallery.html" class="nav-link-mobile">Gallery</a>
+    <a href="contact.html" class="nav-link-mobile">Contact</a>
+  </div>
+
+  <!-- HERO -->
+  <section class="pt-32 pb-20 px-6 text-center fade-in">
+    <div class="max-w-7xl mx-auto">
+      <div class="floating">
+        <h1 class="text-6xl md:text-8xl font-bold text-electric-blue glow-text mb-6">
+          ABOUT ELEVATE
+        </h1>
+        <p class="text-2xl text-gray-300 max-w-4xl mx-auto">
+          Where Innovation Meets Transformation
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider max-w-5xl mx-auto"></div>
+
+  <!-- Main Content -->
+  <section class="py-20 px-6 fade-in">
+    <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center mb-24">
+      <div class="order-2 md:order-1">
+        <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2070&auto=format&fit=crop"
+             class="w-full rounded-2xl shadow-2xl card-hover" alt="Elevate Fitness Facility">
+      </div>
+      <div class="order-1 md:order-2 space-y-8">
+        <div class="info-box bg-dark-card p-10 rounded-2xl border border-gray-800">
+          <h3 class="text-4xl font-bold text-neon-green glow-text mb-6">Our Mission</h3>
+          <p class="text-xl text-gray-300 leading-relaxed">
+            To redefine fitness by fusing cutting-edge technology, expert coaching, and an unbreakable community — helping every member become the strongest version of themselves.
+          </p>
+        </div>
+        <div class="info-box bg-dark-card p-10 rounded-2xl border border-gray-800">
+          <h3 class="text-4xl font-bold text-electric-blue glow-text mb-6">Our Vision</h3>
+          <p class="text-xl text-gray-300 leading-relaxed">
+            A world where fitness is personalized, immersive, and limitless — powered by AI, VR, biohacking, and human connection.
+          </p>
+        </div>
+        <a href="programs.html" class="btn-neon text-lg pulse-ring inline-block">EXPLORE PROGRAMS</a>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-10 max-w-5xl mx-auto mb-32">
+      <div class="text-center value-card bg-dark-card p-8 rounded-2xl">
+        <div class="stat-number">20K</div>
+        <p class="text-electric-blue text-xl font-bold mt-2">Sq Ft Facility</p>
+      </div>
+      <div class="text-center value-card bg-dark-card p-8 rounded-2xl">
+        <div class="stat-number">5K+</div>
+        <p class="text-electric-blue text-xl font-bold mt-2">Active Members</p>
+      </div>
+      <div class="text-center value-card bg-dark-card p-8 rounded-2xl">
+        <div class="stat-number">50+</div>
+        <p class="text-electric-blue text-xl font-bold mt-2">Expert Trainers</p>
+      </div>
+      <div class="text-center value-card bg-dark-card p-8 rounded-2xl">
+        <div class="stat-number">24/7</div>
+        <p class="text-electric-blue text-xl font-bold mt-2">Access</p>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="max-w-4xl mx-auto mb-32 fade-in">
+      <h2 class="text-5xl font-bold text-center text-neon-green glow-text mb-16">Our Journey</h2>
+      <div class="space-y-12">
+        <div class="timeline-item">
+          <h3 class="text-2xl font-bold text-neon-green">2020 – The Spark</h3>
+          <p class="text-gray-300 mt-3 text-lg">Born from a vision to fuse tech + fitness. First location opens.</p>
+        </div>
+        <div class="timeline-item">
+          <h3 class="text-2xl font-bold text-neon-green">2021 – VR & AI Launch</h3>
+          <p class="text-gray-300 mt-3 text-lg">Introduced virtual reality training and AI coaching — membership hits 1K.</p>
+        </div>
+        <div class="timeline-item">
+          <h3 class="text-2xl font-bold text-neon-green">2023 – Biohacking Zone</h3>
+          <p class="text-gray-300 mt-3 text-lg">Cryotherapy, infrared saunas, red light therapy — redefining recovery.</p>
+        </div>
+        <div class="timeline-item">
+          <h3 class="text-2xl font-bold text-neon-green">2025 – Industry Leader</h3>
+          <p class="text-gray-300 mt-3 text-lg">5,000+ members. 50+ world-class trainers. The future is here.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Core Values -->
+    <div class="max-w-7xl mx-auto fade-in mb-32">
+      <h2 class="text-5xl font-bold text-center text-electric-blue glow-text mb-16">Core Values</h2>
+      <div class="grid md:grid-cols-3 gap-10">
+        <div class="value-card bg-dark-card p-10 rounded-2xl text-center border border-gray-800">
+          <div class="text-6xl mb-6">Strength</div>
+          <h3 class="text-3xl font-bold text-neon-green mb-4">Excellence</h3>
+          <p class="text-gray-300">We demand the best — from our equipment, our coaches, and ourselves.</p>
+        </div>
+        <div class="value-card bg-dark-card p-10 rounded-2xl text-center border border-gray-800">
+          <div class="text-6xl mb-6">Handshake</div>
+          <h3 class="text-3xl font-bold text-neon-green mb-4">Community</h3>
+          <p class="text-gray-300">No one gets left behind. We rise together.</p>
+        </div>
+        <div class="value-card bg-dark-card p-10 rounded-2xl text-center border border-gray-800">
+          <div class="text-6xl mb-6">Rocket</div>
+          <h3 class="text-3xl font-bold text-neon-green mb-4">Innovation</h3>
+          <p class="text-gray-300">Always pushing the boundaries of what’s possible in fitness.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="text-center py-24 fade-in">
+      <h2 class="text-6xl md:text-7xl font-bold mb-8 text-electric-blue glow-text">
+        READY TO <span class="text-neon-green">ELEVATE?</span>
+      </h2>
+      <p class="text-2xl text-gray-300 mb-12 max-w-3xl mx-auto">
+        Join the movement. Become part of something bigger.
+      </p>
+      <div class="flex gap-6 justify-center flex-wrap">
+        <a href="membership.html" class="btn-neon text-xl pulse-ring">JOIN NOW</a>
+        <a href="contact.html" class="btn-border text-xl">CONTACT US</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer (same as homepage) -->
+  <footer class="bg-dark-card py-16 px-6 border-t border-gray-800">
+    <div class="max-w-7xl mx-auto grid md:grid-cols-4 gap-12">
+      <div>
+        <div class="text-3xl font-bold text-neon-green glow-text mb-4">ELEVATE FITNESS</div>
+        <p class="text-gray-400">Next-level training. Unmatched community. Real results.</p>
+      </div>
+      <div>
+        <h4 class="text-xl font-bold text-electric-blue mb-6">Quick Links</h4>
+        <div class="space-y-3">
+          <a href="index.html" class="block text-gray-400 hover:text-neon-green transition">Home</a>
+          <a href="about.html" class="block text-gray-400 hover:text-neon-green transition">About</a>
+          <a href="programs.html" class="block text-gray-400 hover:text-neon-green transition">Programs</a>
+          <a href="contact.html" class="block text-gray-400 hover:text-neon-green transition">Contact</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="text-xl font-bold text-electric-blue mb-6">Programs</h4>
+        <div class="space-y-3">
+          <a href="programs.html" class="block text-gray-400 hover:text-neon-green transition">Strength Training</a>
+          <a href="programs.html" class="block text-gray-400 hover:text-neon-green transition">HIIT</a>
+          <a href="programs.html" class="block text-gray-400 hover:text-neon-green transition">Yoga</a>
+          <a href="programs.html" class="block text-gray-400 hover:text-neon-green transition">Cardio</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="text-xl font-bold text-electric-blue mb-6">Follow Us</h4>
+        <div class="flex gap-5">
+          <a href="#" class="w-12 h-12 bg-neon-green rounded-lg flex items-center justify-center hover:scale-125 transition">
+            <img src="https://img.icons8.com/ios-filled/50/000000/facebook-new.png" class="w-7" alt="FB">
+          </a>
+          <a href="#" class="w-12 h-12 bg-neon-green rounded-lg flex items-center justify-center hover:scale-125 transition">
+            <img src="https://img.icons8.com/ios-filled/50/000000/instagram-new.png" class="w-7" alt="IG">
+          </a>
+          <a href="#" class="w-12 h-12 bg-neon-green rounded-lg flex items-center justify-center hover:scale-125 transition">
+            <img src="https://img.icons8.com/ios-filled/50/000000/twitter.png" class="w-7" alt="TW">
+          </a>
+          <a href="#" class="w-12 h-12 bg-neon-green rounded-lg flex items-center justify-center hover:scale-125 transition">
+            <img src="https://img.icons8.com/ios-filled/50/000000/youtube-play.png" class="w-7" alt="YT">
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="text-center text-gray-500 mt-12 pt-8 border-t border-gray-800">
+      © 2025 ELEVATE FITNESS. All Rights Reserved.
+    </div>
+  </footer>
+
+  <!-- Scripts (same as homepage) -->
+  <script>
+    // 3D Background
+    const canvas = document.getElementById('canvas3d');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.position.z = 5;
+
+    const shapes = [];
+    const geometries = [new THREE.IcosahedronGeometry(0.6, 0), new THREE.OctahedronGeometry(0.6), new THREE.TetrahedronGeometry(0.7)];
+
+    for (let i = 0; i < 18; i++) {
+      const geo = geometries[Math.floor(Math.random() * geometries.length)];
+      const mat = new THREE.MeshBasicMaterial({
+        color: i % 2 === 0 ? 0x00ff41 : 0x00d4ff,
+        wireframe: true, transparent: true, opacity: 0.25
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set((Math.random()-0.5)*12, (Math.random()-0.5)*12, (Math.random()-0.5)*8);
+      mesh.userData = { rx: Math.random()*0.02-0.01, ry: Math.random()*0.02-0.01, dx: (Math.random()-0.5)*0.003, dy: (Math.random()-0.5)*0.003 };
+      shapes.push(mesh);
+      scene.add(mesh);
+    }
+
+    let mouseX = 0, mouseY = 0;
+    document.addEventListener('mousemove', e => {
+      mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+      mouseY = -(e.clientY / window.innerHeight) * 2 +1;
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      shapes.forEach(s => {
+        s.rotation.x += s.userData.rx;
+        s.rotation.y += s.userData.ry;
+        s.position.x += s.userData.dx;
+        s.position.y += s.userData.dy;
+        if (Math.abs(s.position.x) > 7) s.userData.dx *= -1;
+        if (Math.abs(s.position.y) > 7) s.userData.dy *= -1;
+      });
+      camera.position.x += (mouseX * 0.8 - camera.position.x) * 0.05;
+      camera.position.y += (mouseY * 0.8 - camera.position.y) * 0.05;
+      camera.lookAt(0,0,0);
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Mobile Menu & Sticky Nav
+    const mobileBtn = document.getElementById('mobile-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const nav = document.getElementById('navbar');
+
+    mobileBtn.addEventListener('click', () => {
+      mobileBtn.classList.toggle('open');
+      mobileMenu.classList.toggle('open');
+      document.body.classList.toggle('overflow-hidden');
+    });
+
+    document.querySelectorAll('#mobile-menu a').forEach(link => {
+      link.addEventListener('click', () => {
+        mobileBtn.classList.remove('open');
+        mobileMenu.classList.remove('open');
+        document.body.classList.remove('overflow-hidden');
+      });
+    });
+
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('sticky-nav', window.scrollY > 80);
+    });
+
+    // Fade in
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('visible');
+      });
+    }, { threshold: 0.15 });
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
